@@ -14,6 +14,7 @@ class NFeControlller extends Controller
      */
     public function index()
     {
+
         $nfeService = new NFeService([
             "atualizacao" => date('Y-m-d h:i:s'),
             "tpAmb" => 2,
@@ -23,19 +24,19 @@ class NFeControlller extends Controller
             "schemes" => "PL_009_V4",
             "versao" => "4.00"
         ]);
-       
+
         //header("Content-type: text/xml; charset=UTF-8;");
-        
+
         // Gera o XML
-        $xml = $nfeService->gerarNFe();
+        $xml =  $nfeService->gerarNFe();
 
         // Assinar
         $signed_xml = $nfeService->sign($xml);
-        
-        // Transmitir 
-        $resultado = $nfeService->transmitir($signed_xml);
 
-        return $signed_xml;
+        // Transmitir
+        $nfeService->transmitir($signed_xml);
+
+        //echo $resultado;
     }
 
     /**
@@ -46,7 +47,7 @@ class NFeControlller extends Controller
      */
     public function store(Request $request)
     {
-        
+
     }
 
     /**

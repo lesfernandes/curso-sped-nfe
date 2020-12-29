@@ -14,6 +14,7 @@
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.12",
         "laravel/tinker": "^2.5",
+        "nfephp-org/sped-da": "^0.2.6",
         "nfephp-org/sped-nfe": "^5.0"
     },
     "require-dev": {

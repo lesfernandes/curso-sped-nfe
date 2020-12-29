@@ -6,295 +6,221 @@ use NFePHP\NFe\Make;
 use NFePHP\NFe\Tools;
 use NFePHP\Common\Certificate;
 use NFePHP\NFe\Common\Standardize;
-use NFePHP\NFe\Factories\Protocolo;
+use NFePHP\NFe\Complements;
+use NFePHP\DA\NFe\Danfe;
 use stdClass;
 
 class NFeService {
-    
+
     private $config;
     private $tools;
 
     public function __construct($config) {
         $this->config = $config;
         $certificadoDigital = file_get_contents('C:\Users\Leticia\Downloads\test-certs\Wayne Enterprises, Inc.pfx');
-        $this->tools = new Tools(json_encode($config), 
+        $this->tools = new Tools(json_encode($config),
                                 Certificate::readPfx($certificadoDigital, '1234'));
     }
-    
+
     public function gerarNFe() {
 
-        // Criar uma nota vazia
         $nfe = new Make();
+        $std = new \stdClass();
 
-        /** Inf NF-e */
-        $stdInfNFe = new stdClass();
-        $stdInfNFe->versao = '4.00'; //versão do layout (string)
-        //$stdInfNFe->Id = 'NFe35150271780456000160550010000000021800700082'; //se o Id de 44 digitos não for passado será gerado automaticamente
-        $stdInfNFe->pk_nItem = null; //deixe essa variavel sempre como NULL
+        $std->versao = '4.00';
+        $std->Id = null;
+        $std->pk_nItem = '';
+        $nfe->taginfNFe($std);
 
-        $infNFe = $nfe->taginfNFe($stdInfNFe);
+        $std = new \stdClass();
+        $std->cUF = 35; //coloque um código real e válido
+        $std->cNF = '80070008';
+        $std->natOp = 'VENDA';
+        $std->mod = 55;
+        $std->serie = 1;
+        $std->nNF = 10;
+        $std->dhEmi = '2018-07-27T20:48:00-02:00';
+        $std->dhSaiEnt = '2018-07-27T20:48:00-02:00';
+        $std->tpNF = 1;
+        $std->idDest = 1;
+        $std->cMunFG = 3550308; //Código de município precisa ser válido
+        $std->tpImp = 1;
+        $std->tpEmis = 1;
+        $std->cDV = 2;
+        $std->tpAmb = 2; // Se deixar o tpAmb como 2 você emitirá a nota em ambiente de homologação(teste) e as notas fiscais aqui não tem valor fiscal
+        $std->finNFe = 1;
+        $std->indFinal = 0;
+        $std->indPres = 0;
+        $std->procEmi = '0';
+        $std->verProc = 1;
+        $nfe->tagide($std);
 
-        /** IDE  */
-        $stdIde = new stdClass();
-        $stdIde->cUF = 26;
-        $stdIde->cNF = rand(11111111, 99999999);
-        $stdIde->natOp = 'REVENDA DE MERCADORIAS SIMPLES NACIONAL ';
+        $std = new \stdClass();
+        $std->xNome = 'Wayne Enterprises, Inc';
+        $std->IE = '033927243';
+        $std->CRT = 3;
+        $std->CNPJ = '34785515000166';
+        $nfe->tagemit($std);
 
-        //$std->indPag = 0; //NÃO EXISTE MAIS NA VERSÃO 4.00
+        $std = new \stdClass();
+        $std->xLgr = "Rua Teste";
+        $std->nro = '203';
+        $std->xBairro = 'Centro';
+        $std->cMun = 3550308; //Código de município precisa ser válido e igual o  cMunFG
+        $std->xMun = 'Bauru';
+        $std->UF = 'SP';
+        $std->CEP = '80045190';
+        $std->cPais = '1058';
+        $std->xPais = 'BRASIL';
+        $nfe->tagenderEmit($std);
 
-        $stdIde->mod = 55;
-        $stdIde->serie = 1;
-        $stdIde->nNF = 293;
-        $stdIde->dhEmi = date("Y-m-d\TH:i:sP");
-        $stdIde->dhSaiEnt = date("Y-m-d\TH:i:sP");
-        $stdIde->tpNF = 1; // Entrada ou saída
-        $stdIde->idDest = 1; // Dentro ou fora do estado 
-        $stdIde->cMunFG = 2611606 ;
-        $stdIde->tpImp = 1; // Tipo de impressão: 1 - retrato; 2 - paisagem;
-        $stdIde->tpEmis = 1; // Contingência ou normal
-        $stdIde->cDV = 2; // Dígito verificador
-        $stdIde->tpAmb = 2; // Homologação
-        $stdIde->finNFe = 1; // 1- NF-e normal; 2 - NNF-e complementar; 3 - NF-e de ajuste
-        $stdIde->indFinal = 1;
-        $stdIde->indPres = 0;
-        $stdIde->procEmi = 0; 
-        $stdIde->verProc = '7.4.0'; // Versão do seu sistema
-        $stdIde->dhCont = null; // data e hora da entrada em contingência
-        $stdIde->xJust = null; // Sefaz local não responde
+        $std = new \stdClass();
+        $std->xNome = 'Empresa destinatário teste';
+        $std->indIEDest = 2;
+        $std->IE = '033927243';
+        $std->CNPJ = '34785515000166';
+        $nfe->tagdest($std);
 
-        $tagide = $nfe->tagide($stdIde);
+        $std = new \stdClass();
+        $std->xLgr = "Rua Teste";
+        $std->nro = '203';
+        $std->xBairro = 'Centro';
+        $std->cMun = '3506003';
+        $std->xMun = 'Bauru';
+        $std->UF = 'SP';
+        $std->CEP = '80045190';
+        $std->cPais = '1058';
+        $std->xPais = 'BRASIL';
+        $nfe->tagenderDest($std);
 
-        /** Emitente */
-        $stdEmit = new stdClass();
-        $stdEmit->xNome = "Wayne Enterprises, Inc";
-        $stdEmit->xFant = "EXTRA CARNE";
-        $stdEmit->IE = "033927243";
-        $stdEmit->CRT = "3";
-        $stdEmit->CNPJ = "34785515000166"; //indicar apenas um CNPJ ou CPF
+        $std = new \stdClass();
+        $std->item = 1;
+        $std->cEAN = 'SEM GTIN';
+        $std->cEANTrib = 'SEM GTIN';
+        $std->cProd = '0001';
+        $std->xProd = 'Produto teste';
+        $std->NCM = '84669330';
+        $std->CFOP = '5102';
+        $std->uCom = 'PÇ';
+        $std->qCom = '1.0000';
+        $std->vUnCom = '10.99';
+        $std->vProd = '10.99';
+        $std->uTrib = 'PÇ';
+        $std->qTrib = '1.0000';
+        $std->vUnTrib = '10.99';
+        $std->indTot = 1;
+        $nfe->tagprod($std);
 
-        $tagEmit = $nfe->tagemit($stdEmit);
+        $std = new \stdClass();
+        $std->item = 1;
+        $std->vTotTrib = 10.99;
+        $nfe->tagimposto($std);
 
-        /** Endereço do Emitente */
-        $stdEnderEmit = new stdClass();
-        $stdEnderEmit->xLgr = "EXTRA CARNE";
-        $stdEnderEmit->nro = "67";
-        $stdEnderEmit->xCpl = "";
-        $stdEnderEmit->xBairro ="San Martin";
-        $stdEnderEmit->cMun = "2611606";
-        $stdEnderEmit->xMun = "Recife";
-        $stdEnderEmit->UF = "PE"; 
-        $stdEnderEmit->CEP = "50760580";
-        $stdEnderEmit->cPais ="1058";
-        $stdEnderEmit->xPais = "BRASIL";
-        $stdEnderEmit->fone = "4121098000";
+        $std = new \stdClass();
+        $std->item = 1;
+        $std->orig = 0;
+        $std->CST = '00';
+        $std->modBC = 0;
+        $std->vBC = '0.20';
+        $std->pICMS = '18.0000';
+        $std->vICMS = '0.04';
+        $nfe->tagICMS($std);
 
-        $tagEnderEmmit = $nfe->tagenderEmit($stdEnderEmit);
+        $std = new \stdClass();
+        $std->item = 1;
+        $std->cEnq = '999';
+        $std->CST = '50';
+        $std->vIPI = 0;
+        $std->vBC = 0;
+        $std->pIPI = 0;
+        $nfe->tagIPI($std);
 
-        /** DESTINATÁRIO */
-        $stdDest = new stdClass();
-        $stdDest->xNome = "ACOMOS TECNOLOGIA";
-        $stdDest->indIEDest = "9"; 
-        $stdDest->ISUF = "";
-        $stdDest->IM = "";
-        $stdDest->email = "teste@gmail.com";
-        $stdDest->CNPJ = "23519460000126"; //indicar apenas um CNPJ ou CPF ou idEstrangeiro
+        $std = new \stdClass();
+        $std->item = 1;
+        $std->CST = '07';
+        $std->vBC = 0;
+        $std->pPIS = 0;
+        $std->vPIS = 0;
+        $nfe->tagPIS($std);
 
-        $tagDest = $nfe->tagdest($stdDest);
+        $std = new \stdClass();
+        $std->item = 1;
+        $std->vCOFINS = 0;
+        $std->vBC = 0;
+        $std->pCOFINS = 0;
 
-        /** ENDEREÇO DE DESTINO */
-        $stdEnderDest = new stdClass();
-        $stdEnderDest->xLgr = "PROF ALGACYR MUNHOZ MADER";
-        $stdEnderDest->nro = "2800";
-        $stdEnderDest->xCpl = "";
-        $stdEnderDest->xBairro = "CIC";
-        $stdEnderDest->cMun = "2611606";
-        $stdEnderDest->xMun = "Recife";
-        $stdEnderDest->UF = "PE";
-        $stdEnderDest->CEP = "51010040";
-        $stdEnderDest->cPais = "1058";
-        $stdEnderDest->xPais = "BRASIL";
-        $stdEnderDest->fone = "4121098000";
+        $nfe->tagCOFINSST($std);
 
-        $tagEnderDest = $nfe->tagenderDest($stdEnderDest);
+        $std = new \stdClass();
+        $std->item = 1;
+        $std->CST = '01';
+        $std->vBC = 0;
+        $std->pCOFINS = 0;
+        $std->vCOFINS = 0;
+        $std->qBCProd = 0;
+        $std->vAliqProd = 0;
+        $nfe->tagCOFINS($std);
 
-        /** PRODUTOS */
+        $std = new \stdClass();
+        $std->vBC = '0.20';
+        $std->vICMS = 0.04;
+        $std->vICMSDeson = 0.00;
+        $std->vBCST = 0.00;
+        $std->vST = 0.00;
+        $std->vProd = 10.99;
+        $std->vFrete = 0.00;
+        $std->vSeg = 0.00;
+        $std->vDesc = 0.00;
+        $std->vII = 0.00;
+        $std->vIPI = 0.00;
+        $std->vPIS = 0.00;
+        $std->vCOFINS = 0.00;
+        $std->vOutro = 0.00;
+        $std->vNF = 11.03;
+        $std->vTotTrib = 0.00;
+        $nfe->tagICMSTot($std);
 
-        //foreach -> vários produtos
+        $std = new \stdClass();
+        $std->modFrete = 1;
+        $nfe->tagtransp($std);
 
-        $stdProd = new stdClass();
-        $stdProd->item = 1; //item da NFe
-        $stdProd->cProd = "4450";
-        $stdProd->cEAN = "7897534826649";
-        $stdProd->xProd = "LIMPA TELAS 120ML";
-        $stdProd->NCM = "44170010";
+        $std = new \stdClass();
+        $std->item = 1;
+        $std->qVol = 2;
+        $std->esp = 'caixa';
+        $std->marca = 'OLX';
+        $std->nVol = '11111';
+        $std->pesoL = 10.00;
+        $std->pesoB = 11.00;
+        $nfe->tagvol($std);
 
-        $stdProd->cBenef = ""; //incluido no layout 4.00
+        $std = new \stdClass();
+        $std->nFat = '002';
+        $std->vOrig = 100;
+        $std->vLiq = 100;
+        $nfe->tagfat($std);
 
-        $stdProd->CFOP = "5102";
-        $stdProd->uCom = "UN"; // compra
-        $stdProd->qCom = "10";
-        $stdProd->vUnCom = $this->format(6.99);
-        $stdProd->cEANTrib = "7897534826649";
-        $stdProd->uTrib = "UN"; // venda
-        $stdProd->qTrib = "10";
-        $stdProd->vUnTrib = $this->format(6.99);
-        $stdProd->vProd = $this->format($stdProd->qTrib * $stdProd->vUnTrib);
-        $stdProd->vFrete = "";
-        $stdProd->vSeg = "";
-        $stdProd->vDesc = "";
-        $stdProd->vOutro = "";
-        $stdProd->indTot = "1"; // se o valor vai compor o valor total da nota
-        //$stdProd->xPed = "";
-        //$stdProd->nItemPed = "";
-        //$stdProd->nFCI = "";
+        $std = new \stdClass();
+        $std->nDup = '001';
+        $std->dVenc = date('Y-m-d');
+        $std->vDup = 11.03;
+        $nfe->tagdup($std);
 
-        $tagProd = $nfe->tagprod($stdProd);
+        $std = new \stdClass();
+        $std->vTroco = 0;
+        $nfe->tagpag($std);
 
-        /** INFORMAÇÃO ADICIONAL DO PRODUTO */
-        $stdInfAdProd = new stdClass();
-        $stdInfAdProd->item = 1; //item da NFe
+        $std = new \stdClass();
+        $std->indPag = 0;
+        $std->tPag = "01";
+        $std->vPag = 10.99;
+        $std->indPag=0;
+        $nfe->tagdetPag($std);
 
-        $stdInfAdProd->infAdProd = 'informacao adicional do item';
-
-        $tagInfAdProd = $nfe->taginfAdProd($stdInfAdProd);
-
-        /** IMPOSTO */
-        $stdImposto = new stdClass();
-        $stdImposto->item = 1; //item da NFe
-        $stdImposto->vTotTrib = 4.00;
-
-        $tagImposto = $nfe->tagimposto($stdImposto);
-
-        /** ICMS */
-        $stdIcms = new stdClass();
-        $stdIcms->item = 1; //item da NFe
-        $stdIcms->orig = 0;
-        $stdIcms->CST = "00";
-        $stdIcms->modBC = "0";
-        $stdIcms->vBC = $this->format($stdProd->vProd);
-        $stdIcms->pICMS = 18.00;
-        $stdIcms->vICMS = $this->format($stdIcms->vBC * ($stdIcms->pICMS / 100));
-        /*$stdIcms->pFCP;
-        $stdIcms->vFCP;
-        $stdIcms->vBCFCP;
-        $stdIcms->modBCST;
-        $stdIcms->pMVAST;
-        $stdIcms->pRedBCST;
-        $stdIcms->vBCST;
-        $stdIcms->pICMSST;
-        $stdIcms->vICMSST;
-        $stdIcms->vBCFCPST;
-        $stdIcms->pFCPST;
-        $stdIcms->vFCPST;
-        $stdIcms->vICMSDeson;
-        $stdIcms->motDesICMS;
-        $stdIcms->pRedBC;
-        $stdIcms->vICMSOp;
-        $stdIcms->pDif;
-        $stdIcms->vICMSDif;
-        $stdIcms->vBCSTRet;
-        $stdIcms->pST;
-        $stdIcms->vICMSSTRet;
-        $stdIcms->vBCFCPSTRet;
-        $stdIcms->pFCPSTRet;
-        $stdIcms->vFCPSTRet;
-        $stdIcms->pRedBCEfet;
-        $stdIcms->vBCEfet;
-        $stdIcms->pICMSEfet;
-        $stdIcms->vICMSEfet;
-        $stdIcms->vICMSSubstituto; //NT2018.005_1.10_Fevereiro de 2019*/
-
-        $tagIcms = $nfe->tagICMS($stdIcms);
-
-        /** PIS */
-
-        $stdPis = new stdClass();
-        $stdPis->item = 1; //item da NFe
-        $stdPis->CST = '50';
-        $stdPis->vBC = $this->format($stdProd->vProd);
-        $stdPis->pPIS = 1.65;
-        $stdPis->vPIS = $this->format($stdPis->vBC * ($stdPis->pPIS / 100));
-
-        $tagPis = $nfe->tagPIS($stdPis);
-
-        /** COFINS */
-        $stdCofins = new stdClass();
-        $stdCofins->item = 1; //item da NFe
-        $stdCofins->CST = '50';
-        $stdCofins->vBC = $this->format($stdProd->vProd);
-        $stdCofins->pCOFINS = 0.65;
-        $stdCofins->vCOFINS = $this->format($stdCofins->vBC * ($stdCofins->pCOFINS / 100));
-
-        $tagCofins = $nfe->tagCOFINS($stdCofins);
-
-        /** ICMS Total */
-        $stdIcmsTot = new stdClass();
-        $stdIcmsTot->vBC = $this->format($stdProd->vProd);
-        $stdIcms->vICMS = $this->format($stdIcms->vBC * ($stdIcms->pICMS / 100));
-        $stdIcmsTot->vICMSDeson = "";
-        $stdIcmsTot->vFCP = ""; //incluso no layout 4.00
-        $stdIcmsTot->vBCST = "";
-        $stdIcmsTot->vST = "";
-        $stdIcmsTot->vFCPST = ""; //incluso no layout 4.00
-        $stdIcmsTot->vFCPSTRet = ""; //incluso no layout 4.00
-        $stdIcmsTot->vProd = "";
-        $stdIcmsTot->vFrete = "";
-        $stdIcmsTot->vSeg = "";
-        $stdIcmsTot->vDesc = "";
-        $stdIcmsTot->vII = "";
-        $stdIcmsTot->vIPI = "";
-        $stdIcmsTot->vIPIDevol = ""; //incluso no layout 4.00
-        $stdIcmsTot->vPIS = "";
-        $stdIcmsTot->vCOFINS = "";
-        $stdIcmsTot->vOutro = "";
-        $stdIcmsTot->vNF = "";
-        $stdIcmsTot->vTotTrib = "";
-
-        $tagIcmsTot = $nfe->tagICMSTot($stdIcmsTot);
-
-        /** TRANSPORTADORA  */
-        $stdTransp = new stdClass();
-        $stdTransp->modFrete = 1;
-
-        $tagTransp = $nfe->tagtransp($stdTransp);
-
-        /** VOLUMES */
-        $stdVol = new stdClass();
-        $stdVol->item = 1; //indicativo do numero do volume
-        $stdVol->qVol = 1;
-        $stdVol->esp = 'CAIXAS';
-
-        $tagVol = $nfe->tagvol($stdVol);
-
-        /** PAGAMENTO */
-        $stdPag = new stdClass();
-        $stdPag->vTroco = 0.00; //incluso no layout 4.00, obrigatório informar para NFCe (65)
-
-        $tagPag = $nfe->tagpag($stdPag);
-
-        /** DETALHE DO PAGAMENTO */
-        $stdDetPag = new stdClass();
-        $stdDetPag->tPag = '14';
-        $stdDetPag->vPag = $stdProd->vProd; //Obs: deve ser informado o valor pago pelo cliente
-        //$stdDetPag->indPag = '0'; //0= Pagamento à Vista 1= Pagamento à Prazo
-
-        $tagDetPag = $nfe->tagdetPag($stdDetPag);
-
-        /** INFORMAÇÃO ADICIONAL */
-        $stdInfAdic = new stdClass();
-        $stdInfAdic->infAdFisco = 'informacoes para o fisco';
-        $stdInfAdic->infCpl = 'informacoes complementares';
-
-        $tagInfAdic = $nfe->taginfAdic($stdInfAdic);
-        // Monta a nota
-        if($nfe->montaNFe()) {
-            return $nfe->getXML();
-        } else {
-            dd($nfe->getErrors());
-        }
+        return $nfe->getXML();
     }
 
-    /** 
+    /**
      * Assina a nota fiscal
      */
     public function sign($xml) {
@@ -305,29 +231,51 @@ class NFeService {
      * Transmite a nota para sefaz
      */
     public function transmitir($signed_xml) {
-        $resp = $this->tools->sefazEnviaLote([$signed_xml], 1, 1);
+        try{
+            $resp = $this->tools->sefazEnviaLote([$signed_xml], 1);
 
-        dd($resp);
+            $st = new Standardize();
+            $std = $st->toStd($resp);
 
-        $st = new Standardize();
-        $std = $st->toStd($resp);
+            if($std->cStat != 103) {
+                exit("[$std->cStat] $std->xMotivo");
+            }
+            $recibo = $std->infRec->nRec;
 
-        try {
-            $protocol = new Protocol();
-            $xmlProtocolado = $protocol->add($signed_xml, $resp);
-        } catch (Exception $e) {
-            // Aqui tratamos as possíveis exceções ao adicionar o protocolo
+            $protocolo = $this->consultarRecibo($recibo);
+
+            $xmlProtocolado = $this->gerarXmlProtocolada($signed_xml, $protocolo);
+
+            file_put_contents('nota.xml',$xmlProtocolado);
+
+        } catch(\Exception $e) {
             exit($e->getMessage());
         }
+    }
 
-        file_put_contents('nota.xml', $xmlProtocolado);
+    public function gerarXmlProtocolada($signed_xml, $protocolo) {
+        try {
+            $xml = Complements::toAuthorize($signed_xml, $protocolo);
+            return $xml;
+        } catch (\Exception $e) {
+            echo "Erro: " . $e->getMessage();
+        }
+    }
 
-        return $xmlProtocolado;
+    public function consultarRecibo($recibo) {
+        try {
+            $protocolo = $this->tools->sefazConsultaRecibo($recibo);
+            return $protocolo;
+        } catch (\Exception $e) {
+            //aqui você trata possíveis exceptions da consulta
+            exit($e->getMessage());
+        }
     }
 
 
     public function format($number, $dec = 2) {
         return number_format((float) $number, $dec, ".", "");
     }
+
 
 }
