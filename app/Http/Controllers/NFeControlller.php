@@ -33,8 +33,10 @@ class NFeControlller extends Controller
         // Assinar
         $signed_xml = $nfeService->sign($xml);
 
+        $nfeService->gerarDanfe($signed_xml);
+
         // Transmitir
-        $nfeService->transmitir($signed_xml);
+        //$nfeService->transmitir($signed_xml);
 
         //echo $resultado;
     }

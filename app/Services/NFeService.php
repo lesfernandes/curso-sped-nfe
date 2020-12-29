@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Storage;
 use NFePHP\NFe\Make;
 use NFePHP\NFe\Tools;
 use NFePHP\Common\Certificate;
@@ -277,5 +278,11 @@ class NFeService {
         return number_format((float) $number, $dec, ".", "");
     }
 
+
+    public function gerarDanfe($xml){
+        $danfe = new Danfe($xml);
+        $pdf = $danfe->render();
+        Storage::put('danfe2.pdf', $pdf);
+    }
 
 }
